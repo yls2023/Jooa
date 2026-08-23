@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>수영 냥 🐱🌊</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,"Noto Sans KR",sans-serif;background:#bdeeff;overflow:hidden}
+#game{position:relative;width:100vw;height:100vh;overflow:hidden;background:linear-gradient(#86e7ff,#229bd0 70%,#087eb4)}
+#hud{position:absolute;z-index:20;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:#ffffffe8;padding:9px 15px;border-radius:24px;font-weight:800;white-space:nowrap;box-shadow:0 3px 10px #0002}
+#stage{font-size:14px}
+#cat{position:absolute;width:64px;height:64px;font-size:54px;line-height:64px;text-align:center;z-index:10;filter:drop-shadow(0 3px 2px #0004);transition:transform .08s}
+#accessory{position:absolute;z-index:12;left:50%;top:-13px;transform:translateX(-50%);font-size:25px;pointer-events:none}
+#colorDot{position:absolute;z-index:11;left:50%;top:-15px;transform:translateX(-50%);width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 2px 4px #0006;background:#4ea9e8;pointer-events:none}
+#cat.blue #colorDot{background:#2196f3}#cat.yellow #colorDot{background:#ffd21f}#cat.green #colorDot{background:#42c96b}#cat.white #colorDot{background:#fff;border-color:#888}#cat.black #colorDot{background:#222;border-color:#eee}
+.shark{position:absolute;font-size:58px;transform:scaleX(-1);z-index:8;filter:drop-shadow(0 3px 2px #0004)}
+.boss{position:absolute;font-size:145px;transform:scaleX(-1);z-index:8;filter:drop-shadow(0 6px 4px #0006)}
+.fish,.gift{position:absolute;z-index:7;font-size:30px}
+.obstacle{position:absolute;z-index:6;font-size:54px}
+.finish{position:absolute;z-index:5;font-size:75px}
+.bubble{position:absolute;border:2px solid #ffffff88;border-radius:50%;animation:up linear infinite}
+@keyframes up{from{transform:translateY(110vh)}to{transform:translateY(-20vh)}}
+.panel{max-width:700px;width:94%;max-height:92vh;overflow:auto;background:#ffffffed;border-radius:28px;padding:28px;color:#075278;box-shadow:0 10px 30px #0003;text-align:center}
+.overlay{position:absolute;inset:0;z-index:30;background:#087eb4e8;display:flex;align-items:center;justify-content:center;padding:16px}
+.title{font-size:clamp(42px,8vw,76px);margin:0 0 8px;text-shadow:2px 3px #75d9f4}
+button{border:0;border-radius:22px;padding:12px 20px;font-size:18px;font-weight:800;cursor:pointer;margin:6px;background:#fff;color:#087eb4;box-shadow:0 3px 8px #0002}
+button:hover{transform:translateY(-2px)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.characters{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:10px 0}
+.character{min-width:90px;padding:10px 8px;font-size:38px;border:3px solid transparent}
+.character i{display:block;font-style:normal;font-size:42px}
+.character span{display:block;font-size:13px}
+.character.blue{background:#dff4ff}.character.yellow{background:#fff8bf}.character.green{background:#dcf8dc}.character.white{background:#f8f8f8;border-color:#ddd}.character.black{background:#444;color:#fff}
+.character.selected{border-color:#ffd43b;transform:translateY(-4px);box-shadow:0 5px 0 #075278}
+.musicPanel{background:#eefaff;border-radius:18px;padding:12px;margin:12px auto;max-width:430px}
+.musicTitle{font-weight:bold;margin:5px 0 8px}
+.musicPanel iframe{border-radius:12px;display:block}
+.musicPanel small{display:block;margin-top:6px;opacity:.7}
+.difficultyRow{display:flex;justify-content:center;gap:7px;flex-wrap:nowrap;margin-top:8px}
+.difficultyRow .mode{flex:1;min-width:0;margin:0;padding:10px 5px;font-size:16px;line-height:1.2}
+.difficultyRow .mode small{font-size:11px}
+@media(max-width:480px){.difficultyRow{gap:4px}.difficultyRow .mode{padding:8px 2px;font-size:14px}.difficultyRow .mode small{font-size:10px}}
+.mode.selected{background:#075278;color:white;outline:3px solid #75d9f4}
+.menuBtns{display:flex;justify-content:center;flex-wrap:wrap;gap:5px}
+.menuBtns button{min-width:125px}
+#warning,#bossWarning{position:absolute;inset:0;z-index:25;display:none;align-items:center;justify-content:center;text-align:center;color:white;background:#00324bbd;font-size:clamp(35px,7vw,72px);font-weight:900;text-shadow:3px 4px #b00000}
+#bossWarning{animation:pulse .7s infinite alternate}
+@keyframes pulse{to{transform:scale(1.03)}}
+.modal{position:absolute;inset:0;z-index:40;background:#0008;display:flex;align-items:center;justify-content:center;padding:15px}
+.modal .box{background:white;border-radius:24px;padding:25px;max-width:500px;width:92%;text-align:center;color:#075278}
+.hidden{display:none!important}
+.list{background:#eefaff;border-radius:16px;padding:10px;text-align:left;margin:12px auto;max-width:380px}
+.survey{background:#eefaff;border-radius:18px;padding:12px;margin:15px auto;max-width:440px}
+.survey h3{margin:3px 0 8px}
+.survey input,.survey select,.survey textarea{width:100%;margin:5px 0;padding:10px;border:1px solid #9ccddd;border-radius:10px;font:inherit}
+.survey textarea{height:70px;resize:vertical}
+kbd{background:#e7f5fb;border-radius:6px;padding:2px 6px}
+</style>
+</head>
+<body>
+<div id="gameMusicWrap" style="position:fixed;width:1px;height:1px;left:-20px;top:-20px;overflow:hidden;opacity:0;pointer-events:none">
+  <div id="gameMusic"></div>
+</div>
+
+<div id="game">
+  <div id="hud" class="hidden">
+    <span id="hearts">❤️❤️❤️❤️❤️</span>
+    <span>🐟 <b id="score">0</b></span>
+    <span>⏱️ <b id="time">30</b></span>
+    <span id="stage">🌊 레벨 1</span><span id="playerTag"></span>
+  </div>
+
+  <div id="cat" class="blue"><span id="colorDot"></span><span id="accessory"></span>🐱</div>
+
+  <div id="start" class="overlay">
+    <div class="panel">
+      <h1 class="title">수영 냥 🐱🌊</h1>
+      <h2>평화로운 고양이네 바다에 상어가 출몰했다!</h2>
+      <p>함께 수영할 고양이를 먼저 선택하세요.</p>
+      <div style="margin:12px auto;max-width:360px">
+        <b>내 닉네임</b><br>
+        <input id="nickname" maxlength="12" placeholder="닉네임을 입력해주세요!" style="width:100%;margin-top:7px;padding:12px;border:2px solid #9ccddd;border-radius:14px;font-size:17px;text-align:center">
+      </div>
+      <div class="characters">
+        <button class="character blue" onclick="selectCharacter('파란냥','blue',this)">🐱<span>🔵 파란냥</span></button>
+        <button class="character yellow" onclick="selectCharacter('노란냥','yellow',this)">🐱<span>🟡 노란냥</span></button>
+        <button class="character green" onclick="selectCharacter('초록냥','green',this)">🐱<span>🟢 초록냥</span></button>
+        <button class="character white" onclick="selectCharacter('하얀냥','white',this)">🐱<span>⚪ 하얀냥</span></button>
+        <button class="character black" onclick="selectCharacter('검은냥','black',this)">🐱<span>⚫ 검은냥</span></button>
+      </div>
+      <p id="selected">캐릭터를 선택해주세요!</p>
+      <div>
+        <b>악세서리</b><br>
+        <button onclick="setAccessory('')">없음</button>
+        <button onclick="setAccessory('🎀')">🎀 리본</button>
+        <button onclick="setAccessory('👑')">👑 왕관</button>
+        <button onclick="setAccessory('🕶️')">🕶️ 선글라스</button>
+      </div>
+      
+      
+<div style="margin:12px 0">
+        <b>난이도 선택</b>
+        <div class="difficultyRow">
+          <button class="mode selected" data-mode="easy" onclick="selectMode('easy',this)">😊<br>이지<br><small>❤️ 7</small></button>
+          <button class="mode" data-mode="normal" onclick="selectMode('normal',this)">🙂<br>기본<br><small>❤️ 5</small></button>
+          <button class="mode" data-mode="hard" onclick="selectMode('hard',this)">😈<br>하드<br><small>❤️ 3</small></button>
+          <button class="mode specialMode" data-mode="special" onclick="selectMode('special',this)">⚡<br>스페셜<br><small>초고속!</small></button>
+        </div>
+      </div>
+      <div class="menuBtns">
+        <button id="startBtn" onclick="startGame()" disabled>게임 시작 ▶</button>
+        <button onclick="showFish()">🐟 내 물고기</button>
+        <button onclick="showRanking()">🏆 랭킹</button><button onclick="showSurveys()">📝 설문 결과</button>
+      </div>
+      <small>이동: <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> 또는 화면 터치</small>
+    </div>
+  </div>
+
+  <div id="bossWarning">⚠️ 보스 출현! ⚠️<br>🦈 거대 상어가 나타났다!<br><small>최종 보스 맵</small></div>
+
+  <div id="modal" class="modal hidden"><div class="box" id="modalBox"></div></div>
+
+  <div id="clear" class="overlay hidden">
+    <div class="panel">
+      <h1 class="title">🎉 완벽한 수영!</h1>
+      <h2 id="clearMessage">최종 보스를 물리치고 바다를 지켰어요!</h2>
+      <p>최종 점수: <b id="clearScore">0</b></p>
+      <div class="survey">
+        <h3>📝 만족도 조사</h3>
+        <input id="surveyName" placeholder="이름">
+        <select id="surveyRating">
+          <option value="5">★★★★★ 5점</option><option value="4">★★★★ 4점</option>
+          <option value="3">★★★ 3점</option><option value="2">★★ 2점</option><option value="1">★ 1점</option>
+        </select>
+        <textarea id="surveyComment" placeholder="게임을 해본 소감을 적어주세요!"></textarea>
+        <button onclick="submitSurvey()">설문 제출 📨</button>
+        <p id="surveyDone"></p>
+      </div>
+      <button onclick="saveAndRestart()">다시 하기 🔄</button>
+      <button onclick="goHome()">처음으로 🏠</button>
+    </div>
+  </div>
+
+  <div id="over" class="overlay hidden">
+    <div class="panel">
+      <h1 class="title">💦 게임 오버</h1>
+      <h2>하트가 모두 사라졌어요!</h2>
+      <p>점수: <b id="finalScore">0</b></p>
+      <div class="survey">
+        <h3>📝 만족도 조사</h3>
+        <input id="surveyNameOver" placeholder="이름">
+        <select id="surveyRatingOver">
+          <option value="5">★★★★★ 5점</option><option value="4">★★★★ 4점</option>
+          <option value="3">★★★ 3점</option><option value="2">★★ 2점</option><option value="1">★ 1점</option>
+        </select>
+        <textarea id="surveyCommentOver" placeholder="게임을 해본 소감을 적어주세요!"></textarea>
+        <button onclick="submitSurvey('Over')">설문 제출 📨</button>
+        <p id="surveyDoneOver"></p>
+      </div>
+      <button onclick="saveAndRestart()">다시 하기 🔄</button>
+      <button onclick="goHome()">처음으로 🏠</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const game=document.getElementById('game'),cat=document.getElementById('cat');
+let x=innerWidth*.15,y=innerHeight*.58,score=0,life=5,level=0,sec=30,bossSec=20;
+let running=false,bossMode=false,selectedName='',selectedClass='blue',accessory='',playerName='';
+let keys={},timers=[],bossEl=null,invincible=false,worldX=0;
+let difficulty='easy';
+let specialMap=false;
+const modes={
+ easy:{name:'😊 이지모드',maxLife:7,speed:.72},
+ normal:{name:'🙂 기본모드',maxLife:5,speed:1},
+ hard:{name:'😈 하드모드',maxLife:3,speed:1.18},
+ special:{name:'⚡ 스페셜 맵',maxLife:3,speed:1.55}
+};
+
+function selectCharacter(name,cls,btn){
+ selectedName=name;selectedClass=cls;cat.className=cls;cat.querySelector('#accessory').textContent=accessory;
+ document.querySelectorAll('.character').forEach(b=>b.classList.remove('selected'));
+ btn.classList.add('selected');
+ document.getElementById('selected').textContent='선택한 캐릭터: '+name;
+ document.getElementById('startBtn').disabled=false;
+}
+function setAccessory(a){accessory=a;document.getElementById('accessory').textContent=a}
+function selectMode(mode,btn){
+ difficulty=mode;
+ document.querySelectorAll('.mode').forEach(b=>b.classList.remove('selected'));
+ btn.classList.add('selected');
+}
+function maxLife(){return modes[difficulty].maxLife}
+function sharkSpeed(base){return base*modes[difficulty].speed*(specialMap?1.55:1)}
+function resetLife(){life=maxLife();updateHearts()}
+function updateHearts(){document.getElementById('hearts').textContent='❤️'.repeat(life)+'🖤'.repeat(Math.max(0,maxLife()-life))}
+function drawCat(){
+ x=Math.max(0,Math.min(innerWidth-64,x));y=Math.max(75,Math.min(innerHeight-64,y));
+ cat.style.left=x+'px';cat.style.top=y+'px';
+}
+function clearObjects(){
+ document.querySelectorAll('.shark,.boss,.fish,.gift,.obstacle,.finish,.bubble').forEach(e=>e.remove());
+ if(bossEl)bossEl=null;
+ timers.forEach(clearInterval);timers=[];
+}
+function startSpecialMap(){
+ playerName=document.getElementById('nickname').value.trim();
+ if(!playerName){alert('닉네임을 먼저 입력해주세요! 😊');return}
+ if(!selectedName){alert('고양이 캐릭터를 먼저 선택해주세요! 🐱');return}
+ localStorage.setItem('swimCatNickname',playerName);
+ playGameMusic();
+ specialMap=true;
+ document.getElementById('playerTag').textContent='⚡ '+playerName;
+ document.getElementById('start').classList.add('hidden');
+ document.getElementById('over').classList.add('hidden');
+ document.getElementById('clear').classList.add('hidden');
+ document.getElementById('hud').classList.remove('hidden');
+ score=0;life=maxLife();level=1;sec=30;bossSec=30;bossMode=false;worldX=0;
+ updateHearts();document.getElementById('score').textContent=0;
+ startSpecialStage();
+}
+function startSpecialStage(){
+ clearObjects();running=true;level=99;sec=30;bossMode=false;
+ document.getElementById('stage').textContent='⚡ 스페셜 맵 · 초고속 상어!';
+ document.getElementById('time').textContent=30;
+ x=innerWidth*.15;y=innerHeight*.58;drawCat();makeBubbles();
+ timers.push(setInterval(()=>{if(running&&level===99)addFish()},750));
+ timers.push(setInterval(()=>{if(running&&level===99)addShark()},700));
+ timers.push(setInterval(()=>{
+   if(!running||level!==99)return;
+   sec--;document.getElementById('time').textContent=sec;
+   if(sec<=0)startSpecialLevel2();
+ },1000));
+}
+function startSpecialLevel2(){
+ clearLevelTimers();clearObjects();
+ running=true;specialMap=true;level=98;worldX=0;resetLife();
+ x=50;y=innerHeight*.55;
+ document.getElementById('stage').textContent='⚡ 스페셜 맵 레벨 2 · 더 긴 맵!';
+ document.getElementById('time').textContent='∞';
+ drawCat();makeBubbles();spawnSpecialLevel2Objects();
+ timers.push(setInterval(()=>{if(running&&level===98)addFish()},850));
+ timers.push(setInterval(()=>{if(running&&level===98)addShark()},900));
+}
+function spawnSpecialLevel2Objects(){
+ for(let i=0;i<32;i++){
+  let o=document.createElement('div');o.className='obstacle';o.textContent=['🪨','🌿','🪸'][i%3];
+  o.dataset.world=String(240+i*180);
+  o.style.left=o.dataset.world+'px';
+  o.style.top=(110+((i*97)%Math.max(220,innerHeight-240)))+'px';game.append(o);
+ }
+ for(let i=0;i<24;i++){
+  let g=document.createElement('div');g.className='gift';g.textContent='🎁';
+  g.dataset.world=String(320+i*230);
+  g.style.left=g.dataset.world+'px';
+  g.style.top=(130+((i*61)%Math.max(220,innerHeight-250)))+'px';game.append(g);
+ }
+ let f=document.createElement('div');f.className='finish';f.textContent='🏁';
+ f.dataset.world='6200';f.style.left='6200px';f.style.top=(innerHeight*.43)+'px';game.append(f);
+}
+function specialLevel2Loop(){
+ let sp=6.5;
+ if(keys.ArrowRight){x+=sp;worldX+=sp}
+ if(keys.ArrowLeft){x-=sp;worldX=Math.max(0,worldX-sp)}
+ if(keys.ArrowUp)y-=sp;if(keys.ArrowDown)y+=sp;
+ document.querySelectorAll('.obstacle,.gift,.finish').forEach(e=>{
+  let base=parseFloat(e.dataset.world||e.style.left);
+  e.style.left=(base-worldX)+'px';
+  if(hit(cat,e)&&e.classList.contains('obstacle'))loseHeart();
+  if(hit(cat,e)&&e.classList.contains('gift')){score+=20;collectFish(3);document.getElementById('score').textContent=score;e.remove()}
+  if(hit(cat,e)&&e.classList.contains('finish'))startSpecialLevel3();
+ });
+ x=Math.max(0,Math.min(innerWidth-64,x));y=Math.max(80,Math.min(innerHeight-70,y));drawCat();
+}
+function startSpecialLevel3(){
+ if(level===97)return;
+ clearLevelTimers();clearObjects();running=true;specialMap=true;level=97;bossMode=true;bossSec=30;resetLife();
+ document.getElementById('stage').textContent='⚡ 스페셜 맵 레벨 3 · 보스 상어 2마리!';
+ document.getElementById('time').textContent=30;
+ document.getElementById('bossWarning').innerHTML='⚠️ 스페셜 보스 출현! ⚠️<br>🦈 🦈 큰 상어 2마리!<br><small>더 빠르게 움직인다!</small>';
+ document.getElementById('bossWarning').style.display='flex';
+ setTimeout(()=>{
+   document.getElementById('bossWarning').style.display='none';
+   if(running&&level===97){spawnSpecialBoss(0);spawnSpecialBoss(1);}
+ },1600);
+ timers.push(setInterval(()=>{if(running&&level===97)addFish()},800));
+ timers.push(setInterval(()=>{
+  if(!running||level!==97)return;
+  bossSec--;document.getElementById('time').textContent=bossSec;
+  if(bossSec<=0)winGame();
+ },1000));
+}
+function spawnSpecialBoss(index){
+ let b=document.createElement('div');b.className='boss';b.textContent='🦈';
+ b.style.left=(index?innerWidth*.15:innerWidth-180)+'px';
+ b.style.top=(index?innerHeight*.58:120)+'px';game.append(b);
+ let bx=index?innerWidth*.15:innerWidth-180,by=index?innerHeight*.58:120;
+ let dx=(index?1:-1)*sharkSpeed(6.2),dy=sharkSpeed(index?4.1:3.8);
+ timers.push(setInterval(()=>{
+  if(!running||level!==97||!b.isConnected)return;
+  bx+=dx;by+=dy;
+  if(bx<0||bx>innerWidth-170)dx*=-1;
+  if(by<85||by>innerHeight-160)dy*=-1;
+  b.style.left=bx+'px';b.style.top=by+'px';
+  if(hit(cat,b))loseHeart();
+ },22));
+}
+function playGameMusic(){
+ const frame=document.getElementById('gameMusic');
+ if(!frame)return;
+ frame.contentWindow.postMessage(JSON.stringify({
+   event:'command',func:'playVideo',args:[]
+ }), '*');
+}
+function startGame(){
+ specialMap=(difficulty==='special');
+ playerName=document.getElementById('nickname').value.trim();
+ if(!playerName){alert('닉네임을 입력해주세요! 😊');return}
+ if(!selectedName){alert('고양이 캐릭터를 선택해주세요! 🐱');return}
+ localStorage.setItem('swimCatNickname',playerName);
+ document.getElementById('playerTag').textContent='🐱 '+playerName;document.getElementById('start').classList.add('hidden');
+ document.getElementById('over').classList.add('hidden');
+ document.getElementById('clear').classList.add('hidden');
+ document.getElementById('hud').classList.remove('hidden');
+ score=0;life=maxLife();level=1;sec=30;bossSec=30;bossMode=false;worldX=0;
+ updateHearts();document.getElementById('score').textContent=0;
+ if(specialMap) startSpecialStage(); else startLevel1();
+}
+function startLevel1(){
+ clearObjects();running=true;level=1;sec=30;bossMode=false;
+ document.getElementById('stage').textContent='🌊 레벨 1 · 30초 버티기';
+ document.getElementById('time').textContent=30;
+ x=innerWidth*.15;y=innerHeight*.58;drawCat();makeBubbles();
+ timers.push(setInterval(()=>{if(running&&!bossMode)addFish()},850));
+ timers.push(setInterval(()=>{if(running&&!bossMode)addShark()},1200));
+ timers.push(setInterval(()=>{
+  if(!running)return;
+  sec--;document.getElementById('time').textContent=sec;
+  if(sec<=0){clearLevelTimers();startLevel2();}
+ },1000));
+}
+function startLevel2(){
+ clearObjects();resetLife();level=2;worldX=0;x=50;y=innerHeight*.55;
+ document.getElementById('stage').textContent='🗺️ 레벨 2 · 목표 지점까지!';
+ document.getElementById('time').textContent='∞';
+ drawCat();makeBubbles();spawnLevel2Objects();
+ timers.push(setInterval(()=>{if(running&&level===2)addFish()},1000));
+ timers.push(setInterval(()=>{if(running&&level===2)addShark()},1600));
+}
+function spawnLevel2Objects(){
+ for(let i=0;i<12;i++){
+  let o=document.createElement('div');o.className='obstacle';o.textContent=['🪨','🌿','🪸'][i%3];
+  o.style.left=(220+i*190)+'px';o.style.top=(120+((i*83)%Math.max(220,innerHeight-260)))+'px';game.append(o);
+ }
+ for(let i=0;i<10;i++){
+  let g=document.createElement('div');g.className='gift';g.textContent='🎁';
+  g.style.left=(300+i*210)+'px';g.style.top=(130+((i*57)%Math.max(220,innerHeight-260)))+'px';game.append(g);
+ }
+ let f=document.createElement('div');f.className='finish';f.textContent='🏁';f.style.left='2500px';f.style.top=(innerHeight*.43)+'px';game.append(f);
+}
+function level2Loop(){
+ if(!running||level!==2)return;
+ let s=6;
+ if(keys.ArrowRight){x+=s;worldX+=s}
+ if(keys.ArrowLeft){x-=s;worldX=Math.max(0,worldX-s)}
+ if(keys.ArrowUp)y-=s;if(keys.ArrowDown)y+=s;
+ // 맵 진행에 따라 오브젝트가 왼쪽으로 흐르는 효과
+ document.querySelectorAll('.obstacle,.gift,.finish').forEach(e=>{
+  let original=parseFloat(e.dataset.world||e.style.left);
+  if(!e.dataset.world)e.dataset.world=e.style.left;
+  e.style.left=(parseFloat(e.dataset.world)-worldX)+'px';
+  if(hit(cat,e)&&e.classList.contains('obstacle'))loseHeart();
+  if(hit(cat,e)&&e.classList.contains('gift')){score+=20;collectFish(3);document.getElementById('score').textContent=score;e.remove()}
+  if(hit(cat,e)&&e.classList.contains('finish'))startLevel3();
+ });
+ x=Math.max(0,Math.min(innerWidth-64,x));y=Math.max(80,Math.min(innerHeight-70,y));drawCat();
+}
+function startLevel3(){
+ if(level===3)return;
+ clearLevelTimers();clearObjects();resetLife();level=3;bossMode=true;bossSec=30;
+ document.getElementById('stage').textContent='👑 레벨 3 · 최종 보스 30초 버티기';
+ document.getElementById('time').textContent=30;
+ document.getElementById('bossWarning').style.display='flex';
+ setTimeout(()=>{document.getElementById('bossWarning').style.display='none';if(running&&level===3)spawnBoss()},1600);
+ timers.push(setInterval(()=>{if(running&&level===3)addFish()},1100));
+ timers.push(setInterval(()=>{
+  if(!running||level!==3)return;
+  bossSec--;document.getElementById('time').textContent=bossSec;
+  if(bossSec<=0)winGame();
+ },1000));
+}
+function spawnBoss(){
+ let b=document.createElement('div');b.className='boss';b.textContent='🦈';b.style.left=(innerWidth-180)+'px';b.style.top='140px';game.append(b);bossEl=b;
+ let bx=innerWidth-180,by=140,dx=sharkSpeed(4.5),dy=sharkSpeed(3.2);
+ timers.push(setInterval(()=>{
+  if(!running||level!==3||!bossEl)return;
+  bx+=dx;by+=dy;if(bx<0||bx>innerWidth-170)dx*=-1;if(by<90||by>innerHeight-160)dy*=-1;
+  b.style.left=bx+'px';b.style.top=by+'px';
+  if(hit(cat,b))loseHeart();
+ },25));
+}
+function collectFish(amount=1){
+ let total=Number(localStorage.getItem('swimCatFish')||0);
+ total+=amount;
+ localStorage.setItem('swimCatFish',String(total));
+}
+function addFish(){
+ let e=document.createElement('div');e.className='fish';e.textContent='🐟';
+ e.style.left=Math.random()*(innerWidth-50)+'px';e.style.top=90+Math.random()*(innerHeight-160)+'px';game.append(e);
+ let t=setInterval(()=>{if(!running){clearInterval(t);e.remove();return}if(hit(cat,e)){score+=10;collectFish(1);document.getElementById('score').textContent=score;e.remove();clearInterval(t)}},35);
+ setTimeout(()=>{e.remove();clearInterval(t)},5000);
+}
+function addShark(){
+ let e=document.createElement('div');e.className='shark';e.textContent='🦈';e.style.left=innerWidth+'px';e.style.top=90+Math.random()*(innerHeight-170)+'px';game.append(e);
+ let speed=sharkSpeed(3+Math.random()*3),t=setInterval(()=>{
+  if(!running||bossMode){clearInterval(t);e.remove();return}
+  e.style.left=(parseFloat(e.style.left)-speed)+'px';
+  if(hit(cat,e))loseHeart();
+  if(parseFloat(e.style.left)<-100){e.remove();clearInterval(t)}
+ },20);
+}
+function loseHeart(){
+ if(invincible||!running)return;
+ invincible=true;life--;updateHearts();
+ cat.style.opacity='.45';setTimeout(()=>{invincible=false;cat.style.opacity='1'},800);
+ if(life<=0)gameOver();
+}
+function hit(a,b){if(!a||!b)return false;let A=a.getBoundingClientRect(),B=b.getBoundingClientRect();return !(A.right<B.left||A.left>B.right||A.bottom<B.top||A.top>B.bottom)}
+function makeBubbles(){
+ for(let i=0;i<16;i++){let b=document.createElement('div');b.className='bubble';let z=8+Math.random()*28;b.style.width=z+'px';b.style.height=z+'px';b.style.left=Math.random()*100+'vw';b.style.animationDuration=(4+Math.random()*7)+'s';game.append(b)}
+}
+function clearLevelTimers(){timers.forEach(clearInterval);timers=[]}
+function gameOver(){running=false;clearLevelTimers();clearObjects();document.getElementById('finalScore').textContent=score;saveScore(score);document.getElementById('over').classList.remove('hidden')}
+function winGame(){document.getElementById('clearMessage').textContent=specialMap?'⚡ 3개의 스페셜 레벨을 모두 돌파했어요! 보스 상어 2마리도 이겨냈어요!':'최종 보스를 물리치고 바다를 지켰어요!';running=false;clearLevelTimers();clearObjects();document.getElementById('clearScore').textContent=score+100;score+=100;saveScore(score);document.getElementById('clear').classList.remove('hidden')}
+function saveAndRestart(){
+ ['surveyName','surveyComment','surveyNameOver','surveyCommentOver'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''});
+ ['surveyDone','surveyDoneOver'].forEach(id=>{let e=document.getElementById(id);if(e)e.textContent=''});
+ document.getElementById('clear').classList.add('hidden');document.getElementById('over').classList.add('hidden');startGame()
+}
+function goHome(){running=false;clearLevelTimers();clearObjects();document.getElementById('hud').classList.add('hidden');document.getElementById('over').classList.add('hidden');document.getElementById('clear').classList.add('hidden');document.getElementById('start').classList.remove('hidden')}
+function saveScore(v){let r=JSON.parse(localStorage.getItem('swimCatScores')||'[]');r.push({name:playerName,character:selectedName,score:v,date:new Date().toLocaleDateString()});r.sort((a,b)=>b.score-a.score);localStorage.setItem('swimCatScores',JSON.stringify(r.slice(0,10)))}
+function showSurveys(){
+ let surveys=JSON.parse(localStorage.getItem('swimCatSurveys')||'[]');
+ let rows=surveys.length ? surveys.map((a,i)=>`
+   <div style="background:#eefaff;border-radius:12px;padding:10px;margin:8px 0;text-align:left">
+     <b>${i+1}. ${a.name}</b>　<span>${'⭐'.repeat(Number(a.rating))} (${a.rating}/5)</span>
+     <div style="margin-top:5px">${a.comment ? a.comment.replace(/</g,'&lt;').replace(/>/g,'&gt;') : '<i>소감 없음</i>'}</div>
+     <small style="opacity:.65">${a.date}</small>
+   </div>`).join('') : '<p>아직 제출된 설문이 없어요!</p>';
+ let avg=surveys.length ? (surveys.reduce((sum,a)=>sum+Number(a.rating),0)/surveys.length).toFixed(1) : '-';
+ document.getElementById('modalBox').innerHTML=`
+   <h2>📝 만족도 조사 결과</h2>
+   <p>총 <b>${surveys.length}명</b> 참여 · 평균 <b>${avg} / 5점</b></p>
+   <div style="max-height:45vh;overflow:auto">${rows}</div>
+   ${surveys.length?'<button onclick="clearSurveys()">설문 전체 삭제</button>':''}
+   <button onclick="closeModal()">닫기</button>`;
+ document.getElementById('modal').classList.remove('hidden');
+}
+function clearSurveys(){
+ localStorage.removeItem('swimCatSurveys');
+ document.getElementById('modalBox').innerHTML=`
+   <h2>📝 만족도 조사 결과</h2>
+   <p>저장된 설문을 모두 삭제했어요.</p>
+   <button onclick="showSurveys()">설문 결과 새로고침</button>
+   <button onclick="closeModal()">닫기</button>`;
+}
+function showRanking(){
+ let r=JSON.parse(localStorage.getItem('swimCatScores')||'[]');
+ let rows=r.length?r.map((a,i)=>`<div>${i+1}위　<b>${a.name}</b> (${a.character||'고양이'})　<b>${a.score}점</b></div>`).join(''):'아직 기록이 없어요!';
+ document.getElementById('modalBox').innerHTML=`<h2>🏆 나의 랭킹</h2><div class="list">${rows}</div><button onclick="closeModal()">닫기</button>`;
+ document.getElementById('modal').classList.remove('hidden');
+}
+function showFish(){
+ let total=Number(localStorage.getItem('swimCatFish')||0);
+ document.getElementById('modalBox').innerHTML=`<h2>🐟 내 물고기</h2><p>지금까지 모은 물고기: <b>${total}마리</b></p><p>게임에서 🐟을 먹으면 물고기 컬렉션이 늘어나요!</p><button onclick="closeModal()">닫기</button>`;
+ document.getElementById('modal').classList.remove('hidden');
+}
+function submitSurvey(suffix=''){
+ const name=document.getElementById('surveyName'+suffix).value.trim()||playerName||'익명';
+ const rating=document.getElementById('surveyRating'+suffix).value;
+ const comment=document.getElementById('surveyComment'+suffix).value.trim();
+ let surveys=JSON.parse(localStorage.getItem('swimCatSurveys')||'[]');
+ surveys.push({name,rating,comment,date:new Date().toLocaleString()});
+ localStorage.setItem('swimCatSurveys',JSON.stringify(surveys));
+ document.getElementById('surveyDone'+suffix).textContent='설문이 저장되었어요! 고마워요 💙';
+}
+function closeModal(){document.getElementById('modal').classList.add('hidden')}
+addEventListener('keydown',e=>{
+ if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) e.preventDefault();
+ keys[e.key]=true;
+});
+addEventListener('keyup',e=>{
+ if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) e.preventDefault();
+ keys[e.key]=false;
+});
+game.addEventListener('pointerdown',e=>{if(!running)return;x=e.clientX-32;y=e.clientY-32;drawCat()});
+function mainLoop(){
+ if(running){
+   if(level===2){
+     level2Loop();
+   }else if(level===98){
+     specialLevel2Loop();
+   }else if(level===1||level===3||level===97||level===99){
+     let moveSpeed=6;
+     if(keys.ArrowLeft)x-=moveSpeed;
+     if(keys.ArrowRight)x+=moveSpeed;
+     if(keys.ArrowUp)y-=moveSpeed;
+     if(keys.ArrowDown)y+=moveSpeed;
+     drawCat();
+   }
+ }
+ requestAnimationFrame(mainLoop);
+}
+document.getElementById('nickname').value=localStorage.getItem('swimCatNickname')||'';
+drawCat();mainLoop();
+</script>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+let gameMusicPlayer=null;
+function onYouTubeIframeAPIReady(){
+  gameMusicPlayer=new YT.Player('gameMusic',{
+    width:'1',height:'1',
+    videoId:'_2xcge9tMFM',
+    playerVars:{autoplay:0,controls:0,loop:1,playlist:'_2xcge9tMFM',rel:0,playsinline:1},
+    events:{onReady:function(){}}
+  });
+}
+function playGameMusic(){
+  if(gameMusicPlayer && gameMusicPlayer.playVideo){
+    gameMusicPlayer.setVolume(100);
+    gameMusicPlayer.playVideo();
+  }
+}
+</script>
+</body>
+</html>
